@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"git.astuart.co/andrew/nntp"
+	"github.com/andrewstuart/nntp"
 )
 
 func TestDecMulti(t *testing.T) {
