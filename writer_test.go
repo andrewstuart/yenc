@@ -55,6 +55,41 @@ func TestWrite(t *testing.T) {
 	if !bytes.Equal(ourBytes, expected) {
 		t.Errorf("Wrong encoding produced.")
 	}
+
+	n, err := w.Write([]byte("Foo"))
+
+	if err != io.ErrClosedPipe {
+		t.Errorf("Did not throw closed pipe error.")
+	}
+
+	if n > 0 {
+		t.Errorf("Wrote greater than 0 after close: %d", n)
+	}
+}
+
+func TestErrorOnWrite(t *testing.T) {
+	w := NewWriter(&errWriter{})
+
+	_, err := w.Write([]byte("Foo"))
+
+	if err != nil {
+		t.Errorf("Error writing (expected error on close only)")
+	}
+
+	err = w.Close()
+
+	if err != internalErr {
+		t.Errorf("Wrong or no error thrown on close(): %v", err)
+	}
+
+}
+
+type errWriter struct{}
+
+var internalErr = fmt.Errorf("E")
+
+func (ew *errWriter) Write(p []byte) (int, error) {
+	return 0, internalErr
 }
 
 func stripLines(b []byte) []byte {
