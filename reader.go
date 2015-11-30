@@ -115,7 +115,7 @@ readLoop:
 		}
 
 		p[bytesRead] = b - byteOffset
-		d.CRC.Write([]byte{p[bytesRead]})
+		d.CRC.Write(p[bytesRead : bytesRead+1])
 		d.Length++
 		bytesRead++
 	}

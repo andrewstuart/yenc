@@ -50,8 +50,6 @@ func TestWrite(t *testing.T) {
 	ourBytes := stripLines(testWrite.Bytes())
 	expected = stripLines(expected)
 
-	fmt.Printf("ourBytes = %s\n", ourBytes)
-
 	if !bytes.Equal(ourBytes, expected) {
 		t.Errorf("Wrong encoding produced.")
 	}
