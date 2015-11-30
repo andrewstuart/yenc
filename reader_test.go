@@ -36,6 +36,21 @@ func TestDecoder(t *testing.T) {
 	}
 }
 
+func BenchmarkDecoder(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		encoded, err := os.Open("./test/00000005.ntx")
+
+		if err != nil {
+			b.Fatalf("could not begin test: ntx file not readable")
+		}
+
+		_, err = ioutil.ReadAll(NewReader(encoded))
+		if err != nil {
+			b.Fatalf("error decoding: %v\n", err)
+		}
+	}
+}
+
 func getDiff(b1, b2 []byte) []byte {
 	b1c := make([]byte, len(b1))
 	copy(b1c, b1)
