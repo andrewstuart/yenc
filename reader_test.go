@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"testing"
 )
@@ -37,17 +38,23 @@ func TestDecoder(t *testing.T) {
 }
 
 func BenchmarkDecoder(b *testing.B) {
+	encoded, err := os.Open("./test/00000005.ntx")
+
+	if err != nil {
+		b.Fatalf("could not begin test: ntx file not readable")
+	}
+
+	bs, err := ioutil.ReadAll(encoded)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	buf := bytes.NewBuffer(bs)
+
+	empty := make([]byte, 2<<20)
+
 	for i := 0; i < b.N; i++ {
-		encoded, err := os.Open("./test/00000005.ntx")
-
-		if err != nil {
-			b.Fatalf("could not begin test: ntx file not readable")
-		}
-
-		_, err = ioutil.ReadAll(NewReader(encoded))
-		if err != nil {
-			b.Fatalf("error decoding: %v\n", err)
-		}
+		NewReader(buf).Read(empty)
 	}
 }
 

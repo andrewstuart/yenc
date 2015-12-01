@@ -54,11 +54,16 @@ func NewReader(r io.Reader) *Reader {
 }
 
 func (d *Reader) Read(p []byte) (bytesRead int, err error) {
+	defer func() {
+		d.Length += bytesRead
+	}()
+
 	if d.eof {
 		return
 	}
 
 	var b byte
+	var bs []byte
 
 readLoop:
 	for bytesRead < len(p) {
@@ -70,7 +75,6 @@ readLoop:
 
 		switch b {
 		case '\r':
-			var bs []byte
 			bs, err = d.br.Peek(1)
 
 			if err != nil {
@@ -116,7 +120,6 @@ readLoop:
 
 		p[bytesRead] = b - byteOffset
 		d.CRC.Write(p[bytesRead : bytesRead+1])
-		d.Length++
 		bytesRead++
 	}
 
