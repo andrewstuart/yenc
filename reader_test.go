@@ -53,6 +53,8 @@ func BenchmarkDecoder(b *testing.B) {
 
 	empty := make([]byte, 2<<20)
 
+	b.SetBytes(int64(len(bs)))
+
 	for i := 0; i < b.N; i++ {
 		NewReader(buf).Read(empty)
 	}
