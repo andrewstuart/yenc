@@ -7,7 +7,6 @@ import (
 	"hash"
 	"hash/crc32"
 	"io"
-	"log"
 	"strconv"
 )
 
@@ -93,12 +92,10 @@ readLoop:
 				//Skip this byte
 				continue readLoop
 			}
-			break
 		case escape:
-			if len(p) < i+1 {
-				log.Fatal("Ooops")
+			if lp < i+2 {
+				return
 			}
-
 			if p[i+1] == 'y' {
 				var len int
 				len, err = d.checkKeywordLine(p[i:])
@@ -125,7 +122,7 @@ readLoop:
 		}
 
 		p[i-offset] = b - byteOffset
-		d.CRC.Write(p[bytesRead : bytesRead+1])
+		d.CRC.Write(p[:bytesRead+1])
 		bytesRead++
 	}
 
