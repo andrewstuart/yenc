@@ -65,8 +65,10 @@ func (d *Reader) Read(p []byte) (bytesRead int, err error) {
 	var b byte
 	var bs []byte
 
+	var lp = len(p)
+
 readLoop:
-	for bytesRead < len(p) {
+	for bytesRead < lp {
 		b, err = d.br.ReadByte()
 
 		if err != nil {
