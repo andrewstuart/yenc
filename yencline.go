@@ -1,15 +1,17 @@
 package yenc
 
 import (
-	"bufio"
+	"bytes"
 	"fmt"
 	"strings"
 )
 
-type YENCHeader map[string]string
+//Header is a map type for reading a serialized yenc header.
+type Header map[string]string
 
-func (y *YENCHeader) String() string {
-	s := make([]string, 0)
+//String implements the stringer interface, printing the proper yenc header
+func (y *Header) String() string {
+	s := make([]string, 0, 5)
 
 	for k, v := range *y {
 		s = append(s, fmt.Sprintf("%s=%s", k, v))
@@ -18,36 +20,35 @@ func (y *YENCHeader) String() string {
 	return strings.Join(s, " ")
 }
 
-func (y *YENCHeader) Add(k, v string) {
+//Put creates a string entry for a k, v pair
+func (y *Header) Put(k, v string) {
 	(*y)[k] = v
 }
 
-func (y *YENCHeader) Get(k string) string {
+//Get returns the string for a key
+func (y *Header) Get(k string) string {
 	return (*y)[k]
 }
 
-func ReadYENCHeader(br *bufio.Reader) (*YENCHeader, error) {
-	s, err := br.ReadString('\n')
-
-	if err != nil {
-		return nil, err
-	}
+//ReadYENCHeader accepts a byte slice and returns a YENCHeader or any error
+//encountered while decoding, and the header length so that the consumer can
+//ignore the appropriate bytes.
+func ReadYENCHeader(bs []byte) (*Header, int) {
+	i := bytes.IndexByte(bs, '\n') + 1
+	s := string((bs)[:i])
 
 	s = strings.TrimSpace(s)
 
-	y := &YENCHeader{}
-	if err != nil {
-		return y, err
-	}
+	y := &Header{}
 
 	ss := strings.Split(s, " ")
 	for _, kvString := range ss {
 		kvPair := strings.Split(kvString, "=")
 
 		if len(kvPair) == 2 {
-			y.Add(kvPair[0], kvPair[1])
+			y.Put(kvPair[0], kvPair[1])
 		}
 	}
 
-	return y, nil
+	return y, i
 }

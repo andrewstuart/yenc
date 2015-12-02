@@ -37,7 +37,7 @@ func TestDecoder(t *testing.T) {
 	}
 }
 
-func BenchmarkDecoder(b *testing.B) {
+func BenchmarkReader(b *testing.B) {
 	encoded, err := os.Open("./test/00000005.ntx")
 
 	if err != nil {

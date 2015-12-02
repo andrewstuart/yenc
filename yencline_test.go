@@ -1,14 +1,10 @@
 package yenc
 
-import (
-	"bufio"
-	"strings"
-	"testing"
-)
+import "testing"
 
 func TestHeader(t *testing.T) {
-	a := &YENCHeader{}
-	a.Add("size", "123")
+	a := &Header{}
+	a.Put("size", "123")
 	s := a.String()
 
 	if s != "size=123" {
@@ -19,19 +15,18 @@ func TestHeader(t *testing.T) {
 		t.Errorf("Wrong value returned: %s", a.Get("size"))
 	}
 
-	b := bufio.NewReader(strings.NewReader("foo=3 bar=baz test=true\n"))
-	y, err := ReadYENCHeader(b)
-
-	if err != nil {
-		t.Errorf("error reading header: %v", err)
-	}
+	b := []byte("foo=3 bar=baz test=true\n")
+	y, n := ReadYENCHeader(b)
 
 	if len(*y) != 3 {
-		t.Fatalf("Wrong number of headers")
+		t.Fatalf("Wrong number of headers\n")
 	}
 
 	if y.Get("foo") != "3" {
-		t.Errorf("wrong value at foo")
+		t.Errorf("wrong value at foo\n")
 	}
 
+	if len(b) != n {
+		t.Errorf("ReadYENCHeader did not modify original byte slice. Length: %d\n", n)
+	}
 }

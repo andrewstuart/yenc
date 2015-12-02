@@ -24,7 +24,7 @@ type Writer struct {
 	CRC            hash.Hash32
 	Length, Line   int
 	Name           string
-	Header, Footer *YENCHeader
+	Header, Footer *Header
 
 	curLineLen int
 	w          io.Writer
@@ -42,8 +42,8 @@ func NewWriter(w io.Writer) *Writer {
 
 		CRC:    crc32.New(crc32.IEEETable),
 		Line:   128,
-		Header: &YENCHeader{},
-		Footer: &YENCHeader{},
+		Header: &Header{},
+		Footer: &Header{},
 	}
 }
 
@@ -83,9 +83,9 @@ func (w *Writer) Write(p []byte) (written int, err error) {
 func (w *Writer) Close() error {
 	w.cls = true
 
-	w.Header.Add("size", strconv.Itoa(w.Length))
-	w.Header.Add("name", w.Name)
-	w.Header.Add("line", strconv.Itoa(w.Line))
+	w.Header.Put("size", strconv.Itoa(w.Length))
+	w.Header.Put("name", w.Name)
+	w.Header.Put("line", strconv.Itoa(w.Line))
 
 	fmt.Fprintf(w.w, "=ybegin %s \r\n", w.Header)
 	_, err := io.Copy(w.w, w.body)
@@ -101,8 +101,8 @@ func (w *Writer) Close() error {
 	p := make([]byte, 4)
 	binary.BigEndian.PutUint32(p, w.CRC.Sum32())
 
-	w.Footer.Add("pcrc32", hex.EncodeToString(p))
-	w.Footer.Add("size", strconv.Itoa(w.Length))
+	w.Footer.Put("pcrc32", hex.EncodeToString(p))
+	w.Footer.Put("size", strconv.Itoa(w.Length))
 
 	fmt.Fprintf(w.w, "=yend %s\r\n", w.Footer)
 

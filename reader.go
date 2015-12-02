@@ -7,6 +7,7 @@ import (
 	"hash"
 	"hash/crc32"
 	"io"
+	"log"
 	"strconv"
 )
 
@@ -42,7 +43,7 @@ type Reader struct {
 
 	Length          int
 	CRC             hash.Hash32
-	Headers, Footer *YENCHeader
+	Headers, Footer *Header
 }
 
 //NewReader returns a reader from an input reader.
@@ -62,56 +63,59 @@ func (d *Reader) Read(p []byte) (bytesRead int, err error) {
 		return
 	}
 
+	var n int
+	n, err = d.br.Read(p)
+
+	if err != nil && err != io.EOF {
+		return
+	}
+
+	lp := len(p)
+
+	var offset int
 	var b byte
-	var bs []byte
 
-	var lp = len(p)
-
+	//i points at current byte. i-offset is where the current byte should go.
 readLoop:
-	for bytesRead < lp {
-		b, err = d.br.ReadByte()
-
-		if err != nil {
-			return
-		}
-
+	for i := 0; i < n; i++ {
+		b = p[i]
 		switch b {
 		case '\r':
-			bs, err = d.br.Peek(1)
-
-			if err != nil {
-				return
-			}
-			if len(bs) < 1 {
+			if lp < i+1 {
 				return
 			}
 
-			if bs[0] == '\n' {
-				_, err = d.br.ReadByte()
-
-				if err != nil {
-					return
-				}
-
+			if p[i+1] == '\n' {
+				//Skip next byte
+				i++
+				//Set insert position 2 back
+				offset += 2
+				//Skip this byte
 				continue readLoop
-			} else {
-				break
 			}
+			break
 		case escape:
-			b, err = d.br.ReadByte()
-
-			if err != nil {
-				return
+			if len(p) < i+1 {
+				log.Fatal("Ooops")
 			}
 
-			if b == 'y' {
-				err = d.checkKeywordLine()
+			if p[i+1] == 'y' {
+				var len int
+				len, err = d.checkKeywordLine(p[i:])
 				if err != nil {
 					return
 				}
 
+				//Set offset len back
+				offset += len
+				//Skip all len bytes
+				i += len
 				continue readLoop
 			}
+
+			//Read next byte
+			i++
+			b = p[i]
 
 			b -= specialOffset
 		}
@@ -120,7 +124,7 @@ readLoop:
 			continue readLoop
 		}
 
-		p[bytesRead] = b - byteOffset
+		p[i-offset] = b - byteOffset
 		d.CRC.Write(p[bytesRead : bytesRead+1])
 		bytesRead++
 	}
@@ -128,73 +132,60 @@ readLoop:
 	return
 }
 
-func (d *Reader) checkKeywordLine() error {
-	bs, err := d.br.Peek(5)
-
-	if err != nil {
-		return err
-	}
-
+func (d *Reader) checkKeywordLine(bs []byte) (n int, err error) {
 	if beginsWith(bs, headerBytes) || beginsWith(bs, partBytes) {
 		d.begun = true
 
-		h, err := ReadYENCHeader(d.br)
-		if err != nil {
-			return err
-		}
+		var h *Header
+		h, n = ReadYENCHeader(bs)
 		d.Headers = h
+		return
+	}
 
-		return err
-	} else if beginsWith(bs, trailerBytes) {
+	if beginsWith(bs, trailerBytes) {
 		d.eof = true
 
-		if err = d.checkTrailer(bs); err != nil {
-			return err
+		if n, err = d.checkTrailer(bs); err != nil {
+			return
 		}
 
 		if err == nil {
 			err = io.EOF
 		}
-
-		return err
 	}
 
-	return nil
+	return
 }
 
 func beginsWith(l, c []byte) bool {
 	return len(l) >= len(c) && bytes.Equal(c, l[:len(c)])
 }
 
-func (d *Reader) checkTrailer(l []byte) error {
-	f, err := ReadYENCHeader(d.br)
-
-	if err != nil {
-		return err
-	}
+func (d *Reader) checkTrailer(l []byte) (int, error) {
+	f, n := ReadYENCHeader(l)
 
 	d.Footer = f
 	preCrc := d.Footer.Get("pcrc32")
 
 	if preCrc == "" {
-		return nil
+		return n, nil
 	}
 
 	i, err := strconv.ParseUint(preCrc, 16, 0)
 	if err != nil {
-		return fmt.Errorf("error parsing uint: %v", err)
+		return n, fmt.Errorf("error parsing uint: %v", err)
 	}
 
 	length, err := strconv.Atoi(d.Footer.Get("size"))
 
 	if err != nil && length != d.Length {
-		return ErrWrongSize
+		return n, ErrWrongSize
 	}
 
 	sum := d.CRC.Sum32()
 	if sum != uint32(i) {
-		return ErrBadCRC
+		return n, ErrBadCRC
 	}
 
-	return nil
+	return n, nil
 }
