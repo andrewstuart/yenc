@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"os"
+	"log"
 	"testing"
 )
 
 func TestDecoder(t *testing.T) {
-	encoded, err := os.Open("./test/00000005.ntx")
+	encoded, err := ioutil.ReadFile("./test/00000005.ntx")
 
 	if err != nil {
 		t.Fatalf("could not begin test: ntx file not readable")
@@ -23,14 +23,19 @@ func TestDecoder(t *testing.T) {
 		t.Fatalf("could not read unencoded test file")
 	}
 
-	decBytes, err := ioutil.ReadAll(NewReader(encoded))
+	decBytes, err := ioutil.ReadAll(NewReader(bytes.NewReader(encoded)))
 
 	if err != nil {
 		t.Fatalf("Error reading decoded bytes: %v", err)
 	}
 
 	if !bytes.Equal(decBytes, unencoded) {
+		fmt.Println("predecoded")
+		fmt.Println(hex.Dump(encoded))
+		fmt.Println("decoded")
 		fmt.Println(hex.Dump(decBytes))
+		fmt.Println("expected")
+		fmt.Println(hex.Dump(unencoded))
 
 		diff := getDiff(unencoded, decBytes)
 		t.Errorf("Decoded bytes did not equal unencoded bytes. Diff was %d long; dec was %d long", len(diff), len(decBytes))
@@ -44,19 +49,20 @@ func BenchmarkReader(b *testing.B) {
 		b.Fatalf("could not begin test: ntx file not readable")
 	}
 
-	empty := make([]byte, 2<<20)
-
 	b.SetBytes(int64(len(encoded)))
 
 	b.RunParallel(func(pb *testing.PB) {
+		empty := make([]byte, 1024)
+
 		for pb.Next() {
-			buf := bytes.NewReader(encoded)
-			n, err := NewReader(buf).Read(empty)
+			r := NewReader(bytes.NewReader(encoded))
+			n, err := r.Read(empty)
 
 			if err != nil && err != io.EOF {
 				b.Fatal(err)
 			}
 			if n == 0 {
+				log.Println(empty)
 				b.Fatal("Didn't read anything")
 			}
 		}

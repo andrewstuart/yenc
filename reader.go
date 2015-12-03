@@ -12,9 +12,9 @@ import (
 
 const (
 	keywordLine = "=y"
-	headerLine  = "begin"
-	partLine    = "part"
-	trailerLine = "end"
+	headerLine  = "=ybegin"
+	partLine    = "=ypart"
+	trailerLine = "=yend"
 
 	byteOffset    byte = 42
 	specialOffset byte = 64
@@ -38,6 +38,7 @@ var (
 //useful for consumers.
 type Reader struct {
 	br         *bufio.Reader
+	buf        []byte
 	begun, eof bool
 
 	Length          int
@@ -63,7 +64,19 @@ func (d *Reader) Read(p []byte) (bytesRead int, err error) {
 	}
 
 	var n int
-	n, err = d.br.Read(p)
+
+	if d.buf != nil && len(d.buf) > 0 {
+		//Copy and truncate our buffer
+		n = copy(p, d.buf)
+
+		if len(d.buf) == n {
+			d.buf = nil
+		} else {
+			d.buf = d.buf[n:]
+		}
+	} else {
+		n, err = d.br.Read(p)
+	}
 
 	if err != nil && err != io.EOF {
 		return
@@ -93,27 +106,40 @@ readLoop:
 			if lp < i+2 {
 				return
 			}
+
 			if p[i+1] == 'y' {
-				var len int
+				var l int
 				d.CRC.Write(p[:i])
-				len, err = d.checkKeywordLine(p[i:])
+
+				l, err = d.checkKeywordLine(p[i:])
+
 				if err != nil {
+					if err == io.EOF {
+						//Store the remainder of p bytes ( no longer in reader ) into an internal buffer.
+						if d.buf != nil && len(d.buf) > 0 {
+							d.buf = append(d.buf, p[i:]...)
+						} else {
+							d.buf = p[i:]
+						}
+					}
 					return
 				}
 
-				//Set offset len back
-				offset += len
-				//Skip all len bytes
-				i += len
+				//Set offset l back
+				offset += l
+				//Skip all l bytes
+				i += l - 1
 				continue readLoop
 			}
 
 			//Read next byte
 			i++
+			offset++
 			p[i] -= specialOffset
 		}
 
 		if !d.begun {
+			offset = i + 1
 			continue readLoop
 		}
 
@@ -126,7 +152,7 @@ readLoop:
 }
 
 func (d *Reader) checkKeywordLine(bs []byte) (n int, err error) {
-	if beginsWith(bs, headerBytes) || beginsWith(bs, partBytes) {
+	if bytes.HasPrefix(bs, headerBytes) || bytes.HasPrefix(bs, partBytes) {
 		d.begun = true
 
 		var h *Header
@@ -135,7 +161,7 @@ func (d *Reader) checkKeywordLine(bs []byte) (n int, err error) {
 		return
 	}
 
-	if beginsWith(bs, trailerBytes) {
+	if bytes.HasPrefix(bs, trailerBytes) {
 		d.eof = true
 
 		if n, err = d.checkTrailer(bs); err != nil {
@@ -148,10 +174,6 @@ func (d *Reader) checkKeywordLine(bs []byte) (n int, err error) {
 	}
 
 	return
-}
-
-func beginsWith(l, c []byte) bool {
-	return len(l) >= len(c) && bytes.Equal(c, l[:len(c)])
 }
 
 func (d *Reader) checkTrailer(l []byte) (int, error) {

@@ -1,57 +1,47 @@
 package yenc
 
-import (
-	"bufio"
-	"bytes"
-	"io/ioutil"
-	"os"
-	"testing"
+// func TestDecMulti(t *testing.T) {
+// 	b := &bytes.Buffer{}
 
-	"github.com/andrewstuart/nntp"
-)
+// 	f1, err := os.Open("./test/00000020.ntx")
 
-func TestDecMulti(t *testing.T) {
-	b := &bytes.Buffer{}
+// 	if err != nil {
+// 		t.Fatalf("f1 error")
+// 	}
 
-	f1, err := os.Open("./test/00000020.ntx")
+// 	art, err := nntp.NewResponse(f1)
 
-	if err != nil {
-		t.Fatalf("f1 error")
-	}
+// 	if err != nil {
+// 		t.Fatalf("Article 1 err: %v", err)
+// 	}
 
-	art, err := nntp.NewResponse(f1)
+// 	bufio.NewReader(NewReader(art.Body)).WriteTo(b)
 
-	if err != nil {
-		t.Fatalf("Article 1 err: %v", err)
-	}
+// 	f2, err := os.Open("./test/00000021.ntx")
 
-	bufio.NewReader(NewReader(art.Body)).WriteTo(b)
+// 	if err != nil {
+// 		t.Fatalf("f2 error")
+// 	}
 
-	f2, err := os.Open("./test/00000021.ntx")
+// 	art2, err := nntp.NewResponse(f2)
 
-	if err != nil {
-		t.Fatalf("f2 error")
-	}
+// 	if err != nil {
+// 		t.Fatalf("art2 error: %v", err)
+// 	}
 
-	art2, err := nntp.NewResponse(f2)
+// 	_, err = bufio.NewReader(NewReader(art2.Body)).WriteTo(b)
 
-	if err != nil {
-		t.Fatalf("art2 error: %v", err)
-	}
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	_, err = bufio.NewReader(NewReader(art2.Body)).WriteTo(b)
+// 	fenc, err := ioutil.ReadFile("./test/joystick.jpg")
 
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	if err != nil {
+// 		t.Fatalf("message")
+// 	}
 
-	fenc, err := ioutil.ReadFile("./test/joystick.jpg")
-
-	if err != nil {
-		t.Fatalf("message")
-	}
-
-	if !bytes.Equal(b.Bytes(), fenc) {
-		t.Error("Multipart did not decode properly (decoded separately)")
-	}
-}
+// 	if !bytes.Equal(b.Bytes(), fenc) {
+// 		t.Error("Multipart did not decode properly (decoded separately)")
+// 	}
+// }
