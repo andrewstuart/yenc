@@ -109,7 +109,7 @@ readLoop:
 
 			if p[i+1] == 'y' {
 				var l int
-				d.CRC.Write(p[:i])
+				d.CRC.Write(p[:bytesRead])
 
 				l, err = d.checkKeywordLine(p[i:])
 
