@@ -42,6 +42,7 @@ type Reader struct {
 	begun, eof bool
 
 	Length          int
+	ExpectedCRC     uint32
 	CRC             hash.Hash32
 	Headers, Footer *Header
 }
@@ -154,6 +155,7 @@ readLoop:
 func (d *Reader) checkKeywordLine(bs []byte) (n int, err error) {
 	if bytes.HasPrefix(bs, headerBytes) || bytes.HasPrefix(bs, partBytes) {
 		d.begun = true
+		d.CRC.Reset()
 
 		var h *Header
 		h, n = ReadYENCHeader(bs)
@@ -190,6 +192,8 @@ func (d *Reader) checkTrailer(l []byte) (int, error) {
 	if err != nil {
 		return n, fmt.Errorf("error parsing uint: %v", err)
 	}
+
+	d.ExpectedCRC = uint32(i)
 
 	length, err := strconv.Atoi(d.Footer.Get("size"))
 

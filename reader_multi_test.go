@@ -1,47 +1,73 @@
 package yenc
 
-// func TestDecMulti(t *testing.T) {
-// 	b := &bytes.Buffer{}
+import (
+	"bufio"
+	"bytes"
+	"encoding/hex"
+	"io/ioutil"
+	"log"
+	"os"
+	"testing"
 
-// 	f1, err := os.Open("./test/00000020.ntx")
+	"github.com/andrewstuart/nntp"
+)
 
-// 	if err != nil {
-// 		t.Fatalf("f1 error")
-// 	}
+func TestDecMulti(t *testing.T) {
+	b := &bytes.Buffer{}
 
-// 	art, err := nntp.NewResponse(f1)
+	f1, err := os.Open("./test/00000020.ntx")
 
-// 	if err != nil {
-// 		t.Fatalf("Article 1 err: %v", err)
-// 	}
+	if err != nil {
+		t.Fatalf("f1 error")
+	}
 
-// 	bufio.NewReader(NewReader(art.Body)).WriteTo(b)
+	art, err := nntp.NewResponse(f1)
 
-// 	f2, err := os.Open("./test/00000021.ntx")
+	if err != nil {
+		t.Errorf("Article 1 err: %v\n", err)
+	}
 
-// 	if err != nil {
-// 		t.Fatalf("f2 error")
-// 	}
+	r := NewReader(art.Body)
 
-// 	art2, err := nntp.NewResponse(f2)
+	_, err = bufio.NewReader(r).WriteTo(b)
+	if err != nil {
+		if err == ErrBadCRC {
+			t.Logf("expected crc: %d, was %d.\n", r.ExpectedCRC, r.CRC.Sum32())
+		}
+		t.Errorf("Article 1 error: %v\n", err)
+	}
 
-// 	if err != nil {
-// 		t.Fatalf("art2 error: %v", err)
-// 	}
+	f2, err := os.Open("./test/00000021.ntx")
 
-// 	_, err = bufio.NewReader(NewReader(art2.Body)).WriteTo(b)
+	if err != nil {
+		t.Fatalf("f2 error")
+	}
 
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	art2, err := nntp.NewResponse(f2)
 
-// 	fenc, err := ioutil.ReadFile("./test/joystick.jpg")
+	if err != nil {
+		t.Errorf("art2 error: %v\n", err)
+	}
 
-// 	if err != nil {
-// 		t.Fatalf("message")
-// 	}
+	r = NewReader(art2.Body)
+	_, err = bufio.NewReader(r).WriteTo(b)
 
-// 	if !bytes.Equal(b.Bytes(), fenc) {
-// 		t.Error("Multipart did not decode properly (decoded separately)")
-// 	}
-// }
+	if err != nil {
+		if err == ErrBadCRC {
+			t.Logf("expected crc: %d, was %d.\n", r.ExpectedCRC, r.CRC.Sum32())
+		}
+		t.Errorf("Article 2 error: %v\n", err)
+	}
+
+	fenc, err := ioutil.ReadFile("./test/joystick.jpg")
+
+	if err != nil {
+		t.Fatalf("Error loading file for comparison")
+	}
+
+	if !bytes.Equal(b.Bytes(), fenc) {
+		log.Println("got", hex.Dump(b.Bytes()))
+		log.Println("expected", fenc)
+		t.Error("Multipart did not decode properly (decoded separately)")
+	}
+}
