@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"testing"
 )
@@ -38,26 +38,29 @@ func TestDecoder(t *testing.T) {
 }
 
 func BenchmarkReader(b *testing.B) {
-	encoded, err := os.Open("./test/00000005.ntx")
+	encoded, err := ioutil.ReadFile("./test/00000005.ntx")
 
 	if err != nil {
 		b.Fatalf("could not begin test: ntx file not readable")
 	}
 
-	bs, err := ioutil.ReadAll(encoded)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	buf := bytes.NewBuffer(bs)
-
 	empty := make([]byte, 2<<20)
 
-	b.SetBytes(int64(len(bs)))
+	b.SetBytes(int64(len(encoded)))
 
-	for i := 0; i < b.N; i++ {
-		NewReader(buf).Read(empty)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			buf := bytes.NewReader(encoded)
+			n, err := NewReader(buf).Read(empty)
+
+			if err != nil && err != io.EOF {
+				b.Fatal(err)
+			}
+			if n == 0 {
+				b.Fatal("Didn't read anything")
+			}
+		}
+	})
 }
 
 func getDiff(b1, b2 []byte) []byte {

@@ -71,15 +71,12 @@ func (d *Reader) Read(p []byte) (bytesRead int, err error) {
 	}
 
 	lp := len(p)
-
 	var offset int
-	var b byte
 
 	//i points at current byte. i-offset is where the current byte should go.
 readLoop:
 	for i := 0; i < n; i++ {
-		b = p[i]
-		switch b {
+		switch p[i] {
 		case '\r':
 			if lp < i+1 {
 				return
@@ -93,7 +90,6 @@ readLoop:
 				//Skip this byte
 				continue readLoop
 			}
-			break
 		case escape:
 			if len(p) < i+1 {
 				log.Fatal("Ooops")
@@ -101,6 +97,7 @@ readLoop:
 
 			if p[i+1] == 'y' {
 				var len int
+				d.CRC.Write(p[:i])
 				len, err = d.checkKeywordLine(p[i:])
 				if err != nil {
 					return
@@ -115,20 +112,18 @@ readLoop:
 
 			//Read next byte
 			i++
-			b = p[i]
-
-			b -= specialOffset
+			p[i] -= specialOffset
 		}
 
 		if !d.begun {
 			continue readLoop
 		}
 
-		p[i-offset] = b - byteOffset
-		d.CRC.Write(p[bytesRead : bytesRead+1])
+		p[i-offset] = p[i] - byteOffset
 		bytesRead++
 	}
 
+	d.CRC.Write(p[:bytesRead])
 	return
 }
 
