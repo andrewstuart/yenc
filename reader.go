@@ -72,25 +72,22 @@ readLoop:
 		b, err = d.br.ReadByte()
 
 		if err != nil {
-			return
+			break readLoop
 		}
 
 		switch b {
 		case '\r':
 			bs, err = d.br.Peek(1)
 
-			if err != nil {
-				return
-			}
-			if len(bs) < 1 {
-				return
+			if err != nil || len(bs) < 1 {
+				break readLoop
 			}
 
 			if bs[0] == '\n' {
 				_, err = d.br.ReadByte()
 
 				if err != nil {
-					return
+					break readLoop
 				}
 
 				continue readLoop
@@ -101,10 +98,12 @@ readLoop:
 			b, err = d.br.ReadByte()
 
 			if err != nil {
-				return
+				break readLoop
 			}
 
 			if b == 'y' {
+				//Must write crc before checking bytes. This took me forever to find.
+				d.CRC.Write(p[:bytesRead])
 				err = d.checkKeywordLine()
 				if err != nil {
 					return
@@ -121,10 +120,10 @@ readLoop:
 		}
 
 		p[bytesRead] = b - byteOffset
-		d.CRC.Write(p[bytesRead : bytesRead+1])
 		bytesRead++
 	}
 
+	d.CRC.Write(p[:bytesRead])
 	return
 }
 
