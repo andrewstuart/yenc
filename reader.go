@@ -83,7 +83,6 @@ func (d *Reader) Read(p []byte) (bytesRead int, err error) {
 		return
 	}
 
-	lp := len(p)
 	var offset int
 
 	//i points at current byte. i-offset is where the current byte should go.
@@ -91,7 +90,7 @@ readLoop:
 	for i := 0; i < n; i++ {
 		switch p[i] {
 		case '\r':
-			if lp < i+1 {
+			if n < i+1 {
 				return
 			}
 
@@ -104,7 +103,7 @@ readLoop:
 				continue readLoop
 			}
 		case escape:
-			if lp < i+2 {
+			if n < i+2 {
 				return
 			}
 
