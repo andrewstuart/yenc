@@ -7,7 +7,6 @@ import (
 	"hash"
 	"hash/crc32"
 	"io"
-	"log"
 	"strconv"
 )
 
@@ -91,10 +90,9 @@ readLoop:
 				continue readLoop
 			}
 		case escape:
-			if len(p) < i+1 {
-				log.Fatal("Ooops")
+			if lp < i+2 {
+				return
 			}
-
 			if p[i+1] == 'y' {
 				var len int
 				d.CRC.Write(p[:i])
