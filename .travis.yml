@@ -1,0 +1,6 @@
+language: go
+go_import_path: astuart.co/yenc
+
+matrix:
+  allow_failures:
+    - go: tip

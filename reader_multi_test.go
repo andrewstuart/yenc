@@ -31,8 +31,8 @@ func TestDecMulti(t *testing.T) {
 
 	_, err = bufio.NewReader(r).WriteTo(b)
 	if err != nil {
-		if err == ErrBadCRC {
-			t.Logf("expected crc: %d, was %d.\n", r.ExpectedCRC, r.CRC.Sum32())
+		if err, ok := err.(ErrBadCRC); ok {
+			t.Log(err)
 		}
 		t.Errorf("Article 1 error: %v\n", err)
 	}
@@ -53,8 +53,8 @@ func TestDecMulti(t *testing.T) {
 	_, err = bufio.NewReader(r).WriteTo(b)
 
 	if err != nil {
-		if err == ErrBadCRC {
-			t.Logf("expected crc: %d, was %d.\n", r.ExpectedCRC, r.CRC.Sum32())
+		if err, ok := err.(ErrBadCRC); ok {
+			t.Log(err)
 		}
 		t.Errorf("Article 2 error: %v\n", err)
 	}

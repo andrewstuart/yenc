@@ -7,29 +7,25 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDecoder(t *testing.T) {
+	asrt := assert.New(t)
 	encoded, err := ioutil.ReadFile("./test/00000005.ntx")
-
-	if err != nil {
-		t.Fatalf("could not begin test: ntx file not readable")
-	}
+	asrt.NoError(err)
 
 	unencoded, err := ioutil.ReadFile("./test/testfile.txt")
-
-	if err != nil {
-		t.Fatalf("could not read unencoded test file")
-	}
+	asrt.NoError(err)
 
 	decBytes, err := ioutil.ReadAll(NewReader(bytes.NewReader(encoded)))
+	asrt.NoError(err)
 
-	if err != nil {
-		t.Fatalf("Error reading decoded bytes: %v", err)
-	}
-
-	if !bytes.Equal(decBytes, unencoded) {
+	if !asrt.Equal(decBytes, unencoded) {
 		fmt.Println("predecoded")
 		fmt.Println(hex.Dump(encoded))
 		fmt.Println("decoded")
@@ -39,6 +35,22 @@ func TestDecoder(t *testing.T) {
 
 		diff := getDiff(unencoded, decBytes)
 		t.Errorf("Decoded bytes did not equal unencoded bytes. Diff was %d long; dec was %d long", len(diff), len(decBytes))
+	}
+}
+
+func TestReader(t *testing.T) {
+	asrt := assert.New(t)
+	fs, _ := filepath.Glob("./test/examples/*raw")
+
+	for _, e := range fs {
+		enc, err := os.Open(e)
+		asrt.NoError(err)
+
+		r := NewReader(enc)
+
+		b := &bytes.Buffer{}
+		_, err = io.Copy(b, r)
+		asrt.NoError(err)
 	}
 }
 
