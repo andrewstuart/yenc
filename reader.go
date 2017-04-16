@@ -44,7 +44,7 @@ type ErrBadCRC struct {
 
 // Error implements error
 func (e ErrBadCRC) Error() string {
-	return fmt.Sprintf("bad crc; expected %d got %d", e.Expected, e.Actual)
+	return fmt.Sprintf("bad crc; expected %d, got %d", e.Expected, e.Actual)
 }
 
 //Reader implements the io.Reader methods for an underlying YENC
@@ -238,6 +238,9 @@ func (d *Reader) checkTrailer(l []byte) (int, error) {
 
 // CheckCRC makes sure the CRC matches and returns an error if not
 func (d *Reader) CheckCRC() error {
+	if d.ExpectedCRC == 0 {
+		return nil
+	}
 	sum := d.CRC.Sum32()
 
 	if sum != d.ExpectedCRC {
