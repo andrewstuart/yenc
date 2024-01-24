@@ -1,0 +1,10 @@
+github.com/andrewstuart/nntp v0.0.0-20151204031550-d0382e0d9241 h1:9g99n+OahrB7hhIeU1+hVss9BvQ8PeZE7uD1ybKCFMU=
+github.com/andrewstuart/nntp v0.0.0-20151204031550-d0382e0d9241/go.mod h1:GP/6QwQa/Boak/LRNhGObdLtC6VPUdNnKsH2HzPAuXI=
+github.com/andrewstuart/pool v0.0.0-20150425222649-3d2cc9c43044 h1:eRO7ggsOMC4Wp+BqHT8aSlN4A4Hc5ktRNxMA65wRytg=
+github.com/andrewstuart/pool v0.0.0-20150425222649-3d2cc9c43044/go.mod h1:tzDSmmUwzkk877t6Jh47gUnLt1xS84gYKhSdHarp6wY=
+github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
+github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1w=
+github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
